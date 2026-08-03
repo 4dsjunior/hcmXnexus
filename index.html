@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação de Escopo e Senioridade</title>
+    <style>
+        /* Estilos baseados em Mobile First */
+        :root {
+            --primary: #2563eb;
+            --primary-bg: #eff6ff;
+            --success: #10b981;
+            --gray-light: #f3f4f6;
+            --gray-border: #e5e7eb;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 16px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+
+        /* Cabeçalho e Progresso */
+        .progress-indicator {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+        }
+
+        .employee-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray-border);
+            margin-bottom: 20px;
+        }
+
+        .emp-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 4px;
+            color: #111827;
+        }
+
+        .emp-meta {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin: 2px 0;
+        }
+
+        /* Área de Perguntas */
+        .step-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #111827;
+        }
+
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Cards Clicáveis */
+        .card-option {
+            padding: 16px;
+            border: 2px solid var(--gray-border);
+            border-radius: 12px;
+            font-size: 15px;
+            line-height: 1.4;
+            color: var(--text-main);
+            background-color: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none; /* Evita selecionar o texto ao tocar duas vezes no celular */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card-option:active {
+            transform: scale(0.98);
+        }
+
+        .card-option.selected {
+            border-color: var(--primary);
+            background-color: var(--primary-bg);
+            color: #1e40af;
+            font-weight: 500;
+        }
+
+        /* Barra de Navegação */
+        .nav-bar {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-border);
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-prev {
+            background-color: var(--gray-light);
+            color: var(--text-main);
+        }
+
+        .btn-next {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn-download {
+            background-color: var(--success);
+            color: #ffffff;
+            display: none; /* Só aparece no final */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="progress-indicator" id="progress-text">Func. 1/4 • Passo 1/2</div>
+        
+        <div class="employee-header">
+            <h2 class="emp-name" id="emp-name">Nome</h2>
+            <p class="emp-meta" id="emp-email">email</p>
+            <p class="emp-meta" id="emp-mat">Matrícula: 000</p>
+        </div>
+
+        <div class="step-title" id="step-title">Título do Passo</div>
+        
+        <div class="cards-container" id="cards-container">
+            <!-- Os cards serão gerados via JavaScript aqui -->
+        </div>
+
+        <div class="nav-bar">
+            <button class="btn btn-prev" id="btn-prev" onclick="goPrev()">Anterior</button>
+            <button class="btn btn-next" id="btn-next" onclick="goNext()">Próximo</button>
+            <button class="btn btn-download" id="btn-download" onclick="downloadJSON()">Baixar JSON</button>
+        </div>
+    </div>
+
+    <script>
+        // --- BASE DE DADOS ---
+        const employees = [
+            { name: 'WELINGTON SIMOES DA SILVA', email: 'welington@grupoemec.com.br', matricula: '2747' },
+            { name: 'ANA LUIZA GONCALVES SIMOES', email: 'ana.luiza@grupoemec.com.br', matricula: '7585' },
+            { name: 'MARCOS PEREIRA DOS SANTOS', email: 'marcos.pereira@grupoemec.com.br', matricula: '7322' },
+            { name: 'CHARLES DE SOUZA MACHADO', email: 'charles@grupoemec.com.br', matricula: '7834' }
+        ];
+
+        const scopeQuestions = [
+            { id: 'scope_1', question: 'O trabalho é predominantemente braçal, de suporte básico, movimentação física ou limpeza/organização de rotina?', answer: 'AUXILIAR' },
+            { id: 'scope_2', question: 'Ele opera sistemas, realiza lançamentos de dados, controle de planilhas de rotina ou atendimento padronizado?', answer: 'ASSISTENTE' },
+            { id: 'scope_3', question: 'Ele analisa relatórios/dados, interpreta regras do negócio, toma decisões técnicas, resolve problemas sem receita pronta ou cria soluções?', answer: 'ANALISTA' },
+            { id: 'scope_4', question: 'Ele lidera pessoas diretamente, distribui as tarefas diárias da equipe, controla horários, escalas, produtividade e garante o cumprimento de prazos?', answer: 'SUPERVISOR' },
+            { id: 'scope_5', question: 'Ele é responsável pela governança geral do setor, orçamentos, definição de padrões, capacidade produtiva e alinhamento com a diretoria?', answer: 'COORDENADOR' }
+        ];
+
+        const seniorityQuestions = [
+            { id: 'senior_1', question: 'Depende de orientação e supervisão frequente para saber o que e como fazer? Está em fase de aprendizado e adaptação às rotinas padrão?', answer: 'NÍVEL I' },
+            { id: 'senior_2', question: 'Domina a rotina diária padronizada e executa suas tarefas com autonomia sem precisar de acompanhamento passo a passo?', answer: 'NÍVEL II' },
+            { id: 'senior_3', question: 'Possui autonomia para resolver problemas complexos, contornar exceções da rotina, gerenciar imprevistos e atuar de forma independente?', answer: 'NÍVEL III' },
+            { id: 'senior_4', question: 'É a referência técnica ou tática do setor. Além de resolver casos de extrema complexidade, audita processos, orienta, capacita e ensina os colegas do time?', answer: 'NÍVEL IV' }
+        ];
+
+        // --- CONTROLE DE ESTADO ---
+        let empIndex = 0;
+        let step = 1; // 1 = Escopo, 2 = Senioridade
+        const answers = {};
+
+        // Inicializa o objeto de respostas
+        employees.forEach(emp => {
+            answers[emp.email] = { scopeId: null, seniorityId: null };
+        });
+
+        // --- FUNÇÃO DE RENDERIZAÇÃO ---
+        function render() {
+            const emp = employees[empIndex];
+            const ans = answers[emp.email];
+            const isScope = step === 1;
+
+            // 1. Atualiza Textos do Cabeçalho
+            document.getElementById('progress-text').innerText = `Func. ${empIndex + 1}/${employees.length} • Passo ${step}/2`;
+            document.getElementById('emp-name').innerText = emp.name;
+            document.getElementById('emp-email').innerText = emp.email;
+            document.getElementById('emp-mat').innerText = `Matrícula: ${emp.matricula}`;
+            document.getElementById('step-title').innerText = isScope ? '1. Identifique o Escopo da Função:' : '2. Identifique a Senioridade:';
+
+            // 2. Gera os Cards Clicáveis
+            const questions = isScope ? scopeQuestions : seniorityQuestions;
+            const selectedId = isScope ? ans.scopeId : ans.seniorityId;
+            const container = document.getElementById('cards-container');
+            
+            container.innerHTML = questions.map(q => `
+                <div class="card-option ${selectedId === q.id ? 'selected' : ''}" 
+                     onclick="selectOption('${q.id}')">
+                    ${q.question}
+                </div>
+            `).join('');
+
+            // 3. Controla a Exibição e Bloqueio dos Botões
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const btnDownload = document.getElementById('btn-download');
+
+            btnPrev.disabled = (empIndex === 0 && step === 1);
+            btnNext.disabled = !selectedId; // Só libera se um card foi selecionado
+
+            // Regra da Última Tela
+            if (empIndex === employees.length - 1 && step === 2) {
+                btnNext.style.display = 'none';
+                btnDownload.style.display = 'block';
+                btnDownload.disabled = !selectedId;
+            } else {
+                btnNext.style.display = 'block';
+                btnDownload.style.display = 'none';
+            }
+        }
+
+        // --- FUNÇÕES DE INTERAÇÃO ---
+        window.selectOption = function(id) {
+            const emp = employees[empIndex];
+            if (step === 1) {
+                answers[emp.email].scopeId = id;
+            } else {
+                answers[emp.email].seniorityId = id;
+            }
+            render(); // Re-renderiza para aplicar a classe .selected no card
+        };
+
+        window.goNext = function() {
+            if (step === 1) {
+                step = 2; // Avança para senioridade do mesmo funcionário
+            } else if (step === 2 && empIndex < employees.length - 1) {
+                empIndex++; // Avança para o escopo do próximo funcionário
+                step = 1;
+            }
+            render();
+        };
+
+        window.goPrev = function() {
+            if (step === 2) {
+                step = 1; // Volta para o escopo do mesmo funcionário
+            } else if (step === 1 && empIndex > 0) {
+                empIndex--; // Volta para a senioridade do funcionário anterior
+                step = 2;
+            }
+            render();
+        };
+
+        // --- GERAÇÃO DO JSON ---
+        window.downloadJSON = function() {
+            const summary = employees.map(emp => {
+                const ans = answers[emp.email];
+                
+                // Converte o ID selecionado de volta para o texto da resposta original
+                const scopeText = scopeQuestions.find(q => q.id === ans.scopeId)?.answer || '—';
+                const seniorityText = seniorityQuestions.find(q => q.id === ans.seniorityId)?.answer || '—';
+                
+                return {
+                    nome: emp.name,
+                    email: emp.email,
+                    matricula: emp.matricula,
+                    escopo: scopeText,
+                    senioridade: seniorityText
+                };
+            });
+
+            // Lógica padrão para forçar download de arquivo no navegador
+            const dataStr = JSON.stringify(summary, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `escopo_senioridade_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        };
+
+        // Inicia a aplicação renderizando a primeira tela
+        render();
+    </script>
+</body>
+</html>
